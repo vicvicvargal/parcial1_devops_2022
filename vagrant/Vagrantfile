@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+
+$install_docker_script_vm1 = <<SCRIPT
+echo "Installing dependencies ..."
+sudo apt-get update
+echo Installing Docker...
+curl -sSL https://get.docker.com/ | sh
+sudo usermod -aG docker vagrant
+sudo docker swarm init --listen-addr 192.168.0.1:2377 --advertise-addr 192.168.0.1:2377
+SCRIPT
+
+$install_docker_script_vm2 = <<SCRIPT
+echo "Installing dependencies ..."
+sudo apt-get update
+echo Installing Docker...
+curl -sSL https://get.docker.com/ | sh
+sudo usermod -aG docker vagrant
+docker swarm join-token manager
+docker swarm join --token SWMTKN-1Token 192.168.0.1:2377
+SCRIPT
+#docker swarm join --tokenkdjhsj710ldjxkdclsuve97fgf16551vsi7xvlzihbs6ag8tgil9w193ndx1i4qfnye7ucjwbvbn6glrw 192.168.0.1:2377
+
+Vagrant.configure("2") do |config|
+
+  #VM1
+  config.vm.define "virtual1" do |virtual1|
+      virtual1.vm.box = "generic/ubuntu2004"
+      virtual1.vm.hostname = "virtual1"
+      virtual1.vm.network "public_network", ip: "192.168.0.1"
+      virtual1.vm.synced_folder "./", "/vagrant/provisioning"
+      virtual1.vm.provision "shell",inline: $install_docker_script_vm1, privileged: true
+    end
+
+
+  #VM2
+  config.vm.define "virtual2" do |virtual2|
+    virtual2.vm.box = "generic/ubuntu2004"
+    virtual2.vm.hostname = "virtual2"
+    virtual2.vm.network "public_network", ip: "192.168.0.2"
+    virtual2.vm.synced_folder "./", "/vagrant/provisioning"
+    virtual2.vm.provision "shell",inline: $install_docker_script_vm2, privileged: true
+  end
+end
+
+
+
